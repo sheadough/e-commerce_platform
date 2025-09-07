@@ -1,0 +1,12 @@
+ **Modern Tech Stack**: Next.js 14, Node.js, TypeScript, PostgreSQL, Redis
+ **Containerization**: Docker & Docker Compose for easy deployment
+ **Authentication**: JWT-based auth with secure password hashing
+ **Payment Integration**: Stripe payment processing ready
+ **File Storage**: MinIO for scalable file/image storage
+ **Search**: Elasticsearch for powerful product search
+ **Caching**: Redis for session management and caching
+ **Database**: PostgreSQL with proper relationships and indexes
+ **Security**: Helmet, CORS, rate limiting, input validation
+ **Monitoring**: Structured logging with Winston
+ **Development**: Hot reload, TypeScript, ESLint
+ **Production Ready**: Nginx reverse proxy, SSL ready
