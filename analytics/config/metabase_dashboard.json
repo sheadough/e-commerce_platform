@@ -1,0 +1,72 @@
+{
+  "dashboards": [
+    {
+      "name": "Executive Summary",
+      "description": "High-level KPIs and metrics",
+      "cards": [
+        {
+          "name": "Total Revenue (Last 30 Days)",
+          "type": "scalar",
+          "query": "SELECT SUM(total_amount) FROM orders WHERE status = 'completed' AND created_at >= NOW() - INTERVAL '30 days'"
+        },
+        {
+          "name": "New Customers (Last 30 Days)",
+          "type": "scalar",
+          "query": "SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '30 days'"
+        },
+        {
+          "name": "Average Order Value",
+          "type": "scalar",
+          "query": "SELECT AVG(total_amount) FROM orders WHERE status = 'completed' AND created_at >= NOW() - INTERVAL '30 days'"
+        },
+        {
+          "name": "Daily Revenue Trend",
+          "type": "line",
+          "query": "SELECT DATE(created_at) as date, SUM(total_amount) as revenue FROM orders WHERE status = 'completed' AND created_at >= NOW() - INTERVAL '90 days' GROUP BY DATE(created_at) ORDER BY date"
+        }
+      ]
+    },
+    {
+      "name": "Product Analytics",
+      "description": "Product performance and inventory insights",
+      "cards": [
+        {
+          "name": "Top Selling Products",
+          "type": "table",
+          "query": "SELECT * FROM product_performance ORDER BY total_revenue DESC LIMIT 20"
+        },
+        {
+          "name": "Low Stock Alert",
+          "type": "table",
+          "query": "SELECT product_name, current_stock, stock_status FROM product_performance WHERE stock_status IN ('Low Stock', 'Out of Stock')"
+        },
+        {
+          "name": "Category Performance",
+          "type": "bar",
+          "query": "SELECT category_name, SUM(total_revenue) as revenue FROM product_performance GROUP BY category_name ORDER BY revenue DESC"
+        }
+      ]
+    },
+    {
+      "name": "Customer Analytics",
+      "description": "Customer behavior and segmentation",
+      "cards": [
+        {
+          "name": "Customer Lifetime Value Distribution",
+          "type": "histogram",
+          "query": "SELECT estimated_annual_value FROM customer_lifetime_value WHERE total_orders > 0"
+        },
+        {
+          "name": "Customer Segments",
+          "type": "pie",
+          "query": "SELECT customer_segment, COUNT(*) as count FROM customer_lifetime_value GROUP BY customer_segment"
+        },
+        {
+          "name": "Sales Funnel",
+          "type": "funnel",
+          "query": "SELECT * FROM sales_funnel WHERE metric_date >= CURRENT_DATE - INTERVAL '30 days'"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # Apache Airflow for orchestration
+  airflow-webserver:
+    image: apache/airflow:2.7.2-python3.11
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres:5432/airflow_db
+      - AIRFLOW__CORE__FERNET_KEY=81HqDtbqAywKSOumSHA3BhWNOdQ26slT6K0YaZeZyPs=
+      - AIRFLOW__WEBSERVER__SECRET_KEY=airflow_secret_key
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./analytics/dags:/opt/airflow/dags
+      - ./analytics/plugins:/opt/airflow/plugins
+      - ./analytics/config:/opt/airflow/config
+    depends_on:
+      - postgres
+    command: webserver
+
+  airflow-scheduler:
+    image: apache/airflow:2.7.2-python3.11
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres:5432/airflow_db
+    volumes:
+      - ./analytics/dags:/opt/airflow/dags
+      - ./analytics/plugins:/opt/airflow/plugins
+    depends_on:
+      - postgres
+    command: scheduler
+
+  # Metabase for Business Intelligence
+  metabase:
+    image: metabase/metabase:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=metabase_db
+      - MB_DB_PORT=5432
+      - MB_DB_USER=metabase
+      - MB_DB_PASS=metabase123
+      - MB_DB_HOST=postgres
+    depends_on:
+      - postgres
+    volumes:
+      - metabase_data:/metabase-data
+
+  # Jupyter for data exploration
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    volumes:
+      - ./analytics/notebooks:/home/jovyan/work
+      - jupyter_data:/home/jovyan
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+
+  # Apache Kafka for streaming
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  # ClickHouse for analytical queries
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"
+      - "9009:9009"
+    environment:
+      - CLICKHOUSE_DB=analytics
+      - CLICKHOUSE_USER=analytics
+      - CLICKHOUSE_PASSWORD=analytics123
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./analytics/clickhouse:/docker-entrypoint-initdb.d
+
+volumes:
+  metabase_data:
+  jupyter_data:
+  zookeeper_data:
+  kafka_data:
+  clickhouse_data:
